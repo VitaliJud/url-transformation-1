@@ -42,8 +42,49 @@ export default {
       <ul>
       <li><code><a href="/redirect?redirectUrl=https://example.com/">/redirect?redirectUrl=https://example.com/</a></code>,</li>
       <li><code><a href="/proxy?modify&proxyUrl=https://example.com/">/proxy?modify&proxyUrl=https://example.com/</a></code>, or</li>
-      <li><code><a href="/api/todos">/api/todos</a></code></li>`,
+      <li><code><a href="/api/todos">/api/todos</a></code></li>
+	  <li><code><a href="/random">/random</a></code></li>`,
 			{ headers: { 'Content-Type': 'text/html' } }
 		);
 	},
 };
+
+addEventListener('fetch', event => {
+	event.respondWith(handleRequest(event.request))
+  })
+  
+  async function handleRequest(request) {
+	const url = new URL(request.url)
+	const pathSegments = url.pathname.split('/').filter(segment => segment)
+  
+	// Define mappings for brands and their IDs
+	const brandMappings = {
+	  'hatsan': 332,
+	  'winchester': 331
+	}
+  
+	// Define valid calibers
+	const validCalibers = new Set(['9mm', '0.25', '.25'])
+  
+	if (pathSegments.length > 1) {
+	  let queryString = ''
+	  let newPath = `/${pathSegments.slice(1).join('/')}`
+  
+	  const firstSegment = pathSegments[0].toLowerCase()
+  
+	  if (brandMappings.hasOwnProperty(firstSegment)) {
+		const brandId = brandMappings[firstSegment]
+		queryString = `brand=${brandId}`
+	  } else if (validCalibers.has(firstSegment)) {
+		queryString = `CALIBER=${firstSegment}`
+	  }
+  
+	  if (queryString) {
+		url.pathname = newPath
+		url.search = `${url.search ? url.search + '&' : '?'}${queryString}`
+	  }
+	}
+  
+	return fetch(url.toString(), request)
+  }
+  
